@@ -1,48 +1,47 @@
 """
-Database Schemas
+Database Schemas for Lily — Your AI Recruiter
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model represents a collection in the database.
+Collection name = lowercase of class name.
 """
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, List, Dict, Any
+from datetime import datetime
 
-from pydantic import BaseModel, Field
-from typing import Optional
+class Role(BaseModel):
+    title: str = Field(..., description="Role title")
+    department: Optional[str] = Field(None, description="Department or team")
+    location: Optional[str] = Field(None, description="Office/Remote")
+    level: Optional[str] = Field(None, description="Seniority level")
+    description: str = Field(..., description="Role description")
+    requirements: List[str] = Field(default_factory=list, description="Key requirements/skills")
+    created_at: Optional[datetime] = None
 
-# Example schemas (replace with your own):
+class Applicant(BaseModel):
+    name: str
+    email: EmailStr
+    resume_text: Optional[str] = None
+    selected_role_id: Optional[str] = None
+    status: str = Field("applied", description="applied|interviewing|completed")
+    created_at: Optional[datetime] = None
 
-class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+class Message(BaseModel):
+    sender: str = Field(..., description="lily|candidate")
+    text: str
+    timestamp: Optional[datetime] = None
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+class Interview(BaseModel):
+    applicant_id: str
+    role_id: str
+    mode: str = Field("chat", description="chat|voice|coding")
+    messages: List[Message] = Field(default_factory=list)
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
 
-# Add your own schemas here:
-# --------------------------------------------------
-
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class Result(BaseModel):
+    interview_id: str
+    communication: int = Field(0, ge=0, le=100)
+    problem_solving: int = Field(0, ge=0, le=100)
+    technical: int = Field(0, ge=0, le=100)
+    summary: str = Field("", description="Feedback summary")
+    created_at: Optional[datetime] = None
